@@ -1,5 +1,9 @@
 # Electrious Reflect Util
 
+
+![Build Status](https://img.shields.io/circleci/token/f25b550e8746acfe0d4f91ac8cfe857f1974f747/project/github/electrious/refutil/master.svg)
+[![Go Doc](https://godoc.org/github.com/electrious/refutil?status.svg)](http://godoc.org/github.com/electrious/refutil)
+
 `reflect` functionality we often use in our projects.
 Who knows maybe you will find it useful as well.
 
