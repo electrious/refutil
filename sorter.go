@@ -2,7 +2,7 @@ package refutil
 
 import "sort"
 
-// StringSorter will sort values in slice
+// ValueSorter will sort values in slice
 // this is good for searching maps and structs
 // which don't have to preserve order
 type ValueSorter []Value
