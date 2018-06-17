@@ -1,39 +1,61 @@
 package refutil
 
-import "reflect"
+import (
+	"reflect"
+)
 
-// Equalizer is way how to check if object
-// has way how to compare to another object
-type Equalizer interface {
-	IsEqual(v interface{}) bool
-}
-
-// IsDeepEqual determines if two Objects are considered equal.
-func IsDeepEqual(expected, actual interface{}) bool {
-	if expected == nil || actual == nil {
-		return expected == actual
+// DeepEqual determines if two Objects are considered equal.
+// This is what reflect does, except this method add nil check
+// for speed improvement
+func (v Data) DeepEqual(element interface{}) bool {
+	data := v.InterfaceOrNil()
+	if data == nil || element == nil {
+		return data == element
 	}
-	return reflect.DeepEqual(expected, actual)
+	return reflect.DeepEqual(data, element)
 }
 
-// IsEqual gets whether two Objects are equal, or if their
-// values are equal.
-func IsEqual(expected, actual interface{}) bool {
-	equalizer, ok := expected.(Equalizer)
+// DeepEqual determines if two Objects are considered equal.
+// This is what reflect does, except this method add nil check
+// for speed improvement
+func DeepEqual(expected, actual interface{}) bool {
+	return NewData(expected).DeepEqual(actual)
+}
+
+// Equal gets whether two Objects are equal.
+// It don't cares about underlying type.
+// If first argument is compliant with `Equalizer` interface
+// then it will use `Equal(interface) bool` on type to compare.
+// Otherwise it try to compare using `DeepEqual` and same types.
+func (v Data) Equal(element interface{}) bool {
+	data := v.InterfaceOrNil()
+	equalizer, ok := data.(Equalizer)
 	if ok {
-		return equalizer.IsEqual(actual)
+		return equalizer.Equal(element)
 	}
-	if IsDeepEqual(expected, actual) {
+	el := NewData(element)
+	if v.IsNil() || el.IsNil() {
+		su := v.Indirect().Untyped().InterfaceOrNil()
+		eu := el.Indirect().Untyped().InterfaceOrNil()
+		return su == eu
+	}
+	if v.DeepEqual(element) {
 		return true
 	}
-	actualType := reflect.TypeOf(actual)
-	if actualType == nil {
-		return false
-	}
-	expectedValue := reflect.ValueOf(expected)
-	if expectedValue.IsValid() && expectedValue.Type().ConvertibleTo(actualType) {
+	at := el.Type()
+	ev := v.Value().Indirect()
+	if ev.IsValid() && ev.Type().ConvertibleTo(at.Type) {
 		// Attempt comparison after type conversion
-		return reflect.DeepEqual(expectedValue.Convert(actualType).Interface(), actual)
+		return reflect.DeepEqual(ev.Convert(at).Interface(), element)
 	}
 	return false
+}
+
+// Equal gets whether two Objects are equal.
+// It don't cares about underlying type.
+// If first argument is compliant with `Equalizer` interface
+// then it will use `Equal(interface) bool` on type to compare.
+// Otherwise it try to compare using `DeepEqual` and same types.
+func Equal(expected, actual interface{}) bool {
+	return NewData(expected).Equal(actual)
 }

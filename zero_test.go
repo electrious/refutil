@@ -3,6 +3,8 @@ package refutil
 import (
 	"testing"
 	"time"
+
+	"github.com/electrious/refutil/test"
 )
 
 type zeroerTest struct {
@@ -75,16 +77,28 @@ func TestIsZero(t *testing.T) {
 		{struct{ Test string }{Test: "1"}, false},
 		{1, false},
 		{uint(1), false},
+		{NewValue(nil), true},
+		{NewValue(struct{}{}), true},
+		{NewValue(""), true},
 	}
 	for _, c := range cases {
 		if c.Result {
 			if !IsZero(c.Value) {
-				t.FailNow()
+				t.Fatalf("'%v' is not zero", c.Value)
 			}
 		} else {
 			if IsZero(c.Value) {
-				t.FailNow()
+				t.Fatalf("'%+#v' is zero", c.Value)
 			}
 		}
+	}
+}
+
+func TestZeroer(t *testing.T) {
+	z := test.Sample(test.SampleEmptyZeroer)
+	v := NewValue(z)
+	_, ok := v.Zeroer()
+	if ok {
+		t.Fatal()
 	}
 }

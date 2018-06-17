@@ -129,7 +129,6 @@ func ReflectValue(v reflect.Value) (rv reflect.Value) {
 				offsetScalar)
 		}
 	}
-
 	pv := reflect.NewAt(vt, upv)
 	rv = pv
 	for i := 0; i < indirects; i++ {

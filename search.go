@@ -1,95 +1,123 @@
 package refutil
 
-import (
-	"reflect"
-	"strings"
-)
+// FindIndex will search for index with `Comparator`. This is
+// useful for your own comparsion
+// func (v Data) FindIndex(element interface{}, compare Comparator) (index int) {
+// 	arr := v.Indirect()
+// 	if arr.InterfaceOrNil() == nil {
+// 		return -1
+// 	}
+// 	if !arr.KindOneOf(reflect.Array, reflect.Slice) {
+// 		panic(ErrArgumentNotSlice)
+// 	}
 
-type comparator func(interface{}, interface{}) bool
+// 	val := arr.Value()
+// 	for i := 0; i < val.Len(); i++ {
+// 		if e.CompareInterfacer(compare, val.Index(i)) {
+// 			return i
+// 		}
+// 	}
+// 	return -1
+// }
 
-// include try loop over the list check if the list includes the element.
-// return (false, -1) if impossible.
-// return (true, -1) if element was not found.
-// return (true, ?) if element was found.
-func include(list interface{}, element interface{}, c comparator) (index int, ok bool) {
-	listValue := reflect.ValueOf(list)
-	elementValue := reflect.ValueOf(element)
-	defer func() {
-		if e := recover(); e != nil {
-			ok = false
-			index = -1
-		}
-	}()
-	if reflect.TypeOf(list).Kind() == reflect.String {
-		return strings.Index(listValue.String(), elementValue.String()), true
-	}
-	if reflect.TypeOf(list).Kind() == reflect.Map {
-		mapKeys := listValue.MapKeys()
-		for i := 0; i < len(mapKeys); i++ {
-			if c(mapKeys[i].Interface(), element) {
-				return i, true
-			}
-		}
-		return -1, true
-	}
-	for i := 0; i < listValue.Len(); i++ {
-		if c(listValue.Index(i).Interface(), element) {
-			return i, true
-		}
-	}
-	return -1, true
-}
+// // Compare current value to another with Comparator interface
+// func (v Data) Compare(comparator Comparator, element interface{}) bool {
+// 	if !v.CanInterface() {
+// 		return false
+// 	}
+// 	return comparator(element)
+// }
 
-// Index will search in list and return index / position if possible
-// return (false, -1) if impossible.
-// return (true, -1) if element was not found.
-// return (true, ?) if element was found.
-func Index(source interface{}, value interface{}) (index int, ok bool) {
-	return include(source, value, IsEqual)
-}
+// // CompareInterfacer current value to Value with Comparator interface
+// func (v Data) CompareInterfacer(comparator Comparator, i Interfacer) bool {
+// 	if !v.CanInterface() {
+// 		return false
+// 	}
+// 	if !i.CanInterface() {
+// 		return false
+// 	}
+// 	return comparator(i.Interface())
+// }
 
-// IndexSame will search in list and return index / position if possible
-// return (false, -1) if impossible.
-// return (true, -1) if element was not found.
-// return (true, ?) if element was found.
-// note that this variant of search care about underlying type
-func IndexSame(source interface{}, value interface{}) (index int, ok bool) {
-	return include(source, value, IsDeepEqual)
-}
+// // CanIndex returns whether is possible to search in interface{}
+// func CanIndex(source interface{}, element interface{}) bool {
+// 	t := IndirectTypeOf(source)
+// 	return KindOneOf(t, reflect.String, reflect.Map, reflect.Array, reflect.Slice)
+// }
 
-// Contains will search for element in source. If possible to search
-// first returned argument will be true and if found
-// second argument will be true as well. This method is very similar
-// to Index if index is > -1 found is true
-func Contains(source interface{}, value interface{}) (found bool, ok bool) {
-	index, done := include(source, value, IsEqual)
-	if !done {
-		return
-	}
-	if index == -1 {
-		ok = true
-		return
-	}
-	ok = true
-	found = true
-	return
-}
+// // FindMapKeyByValue will search through map with `Comparator` and
+// // return key if values are matching
+// func FindMapKeyByValue(source interface{}, element interface{}, compare Comparator) (interface{}, bool) {
+// 	s := NewData(source)
+// 	if !s.KindOneOf(reflect.Map) {
+// 		panic(ErrInvalidArgument)
+// 	}
+// 	e := NewData(element)
+// 	val := s.Value()
+// 	keys := val.MapKeys()
+// 	for i := 0; i < len(keys); i++ {
+// 		value := val.MapIndex(keys[i])
+// 		if e.CompareInterfacer(compare, value) {
+// 			return keys[i].Interface(), true
+// 		}
+// 	}
+// 	return nil, false
+// }
 
-// ContainsSame will search for element in source. If possible to search
-// first returned argument will be true and if found
-// second argument will be true as well. This method is very similar
-// to Index if index is > -1 found is true
-// note that this variant of search care about underlying type
-func ContainsSame(source interface{}, value interface{}) (found bool, ok bool) {
-	index, done := include(source, value, IsDeepEqual)
-	if !done {
-		return
-	}
-	if index == -1 {
-		ok = true
-		return
-	}
-	ok = true
-	found = true
-	return
-}
+// // FindMapValueByKey will search through map with `Comparator` and
+// // retrun value if keys matching
+// func FindMapValueByKey(source interface{}, element interface{}, compare Comparator) (interface{}, bool) {
+// 	s := NewData(source)
+// 	if !s.KindOneOf(reflect.Map) {
+// 		panic(ErrInvalidArgument)
+// 	}
+// 	e := NewData(element)
+// 	val := s.Value()
+// 	keys := val.MapKeys()
+// 	for i := 0; i < len(keys); i++ {
+// 		if e.CompareInterfacer(compare, keys[i]) {
+// 			v := val.MapIndex(keys[i])
+// 			if !v.CanInterface() {
+// 				return nil, false
+// 			}
+// 			return v.Interface(), true
+// 		}
+// 	}
+// 	return nil, false
+// }
+
+// // FindStringIndex will search for index in string. If type has
+// // fmt.Stringer interface it will use it
+// func FindStringIndex(source interface{}, element interface{}) (index int) {
+// 	s := NewData(source)
+// 	e := NewData(element)
+// 	return strings.Index(s.String(), e.String())
+// }
+
+// // Index will search in source and look for same value using `IsEqual` method,
+// // panics if source is not searchable  otherwise return int as index
+// func Index(source interface{}, value interface{}) (index int) {
+// 	return FindIndex(source, value, Equal)
+// }
+
+// // IndexSame will search in source and look for same value using `IsDeepEqual` method,
+// // panics if source is not searchable  otherwise return int as index.
+// // Note that this variant of search care about underlying type
+// func IndexSame(source interface{}, value interface{}) (index int) {
+// 	return FindIndex(source, value, DeepEqual)
+// }
+
+// // Contains will search in source and look for same value using `IsEqual` method,
+// // panics if source is not searchable otherwise return bool if found
+// func Contains(source interface{}, value interface{}) (found bool) {
+// 	index := FindIndex(source, value, Equal)
+// 	return index > -1
+// }
+
+// // ContainsSame will search in source and look for same value using `IsEqual` method,
+// // panics if source is not searchable otherwise return bool if found.
+// // Note that this variant of search care about underlying type
+// func ContainsSame(source interface{}, value interface{}) (found bool) {
+// 	index := FindIndex(source, value, DeepEqual)
+// 	return index > -1
+// }

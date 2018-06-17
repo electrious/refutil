@@ -1,54 +1,52 @@
 package refutil
 
-import "reflect"
+import (
+	"reflect"
+)
 
-// Zeroer ...
-type Zeroer interface {
-	IsZero() bool
-}
-
-// isZeroSlice will check if underlying slice type is equal to
-// zero of its own type
-func isZeroSlice(compare interface{}) bool {
-	typ := reflect.TypeOf(compare)
-	sliceType := reflect.SliceOf(typ.Elem())
-	zeroLenSlice := reflect.MakeSlice(sliceType, 0, 0)
-	convertedZeroLenSlice := zeroLenSlice.Convert(typ)
-	return reflect.DeepEqual(compare, convertedZeroLenSlice.Interface())
+// Zeroer is like assertion with adition check
+// if value can be used for type assertion to Zeroer
+func (v Value) Zeroer() (Zeroer, bool) {
+	if !v.IsValid() {
+		return nil, false
+	}
+	if v.IsNil() {
+		return nil, false
+	}
+	z, k := v.Interface().(Zeroer)
+	return z, k
 }
 
 // IsZero return true if underlying type is equal to its zero value
-func IsZero(compare interface{}) bool {
-	if IsNil(compare) {
-		return true
-	}
-	if zeroer, k := compare.(Zeroer); k {
+func (v Value) IsZero() bool {
+	if zeroer, k := v.Zeroer(); k {
 		return zeroer.IsZero()
 	}
-	typ := reflect.TypeOf(compare)
-	value := reflect.ValueOf(compare)
-	zero := reflect.Zero(typ).Interface()
-	isZero := reflect.DeepEqual(compare, zero)
-	if isZero {
+	if v.IsNil() {
 		return true
 	}
-	switch typ.Kind() {
+	t := v.Type()
+	switch t.Kind() {
 	case reflect.Map:
-		return value.Len() == 0
+		return v.Len() == 0
 	case reflect.Chan:
-		return value.Len() == 0
+		return v.Len() == 0
 	case reflect.Slice:
-		return isZeroSlice(compare)
+		s := t.NewSlice()
+		return reflect.DeepEqual(v.Interface(), s.Interface())
 	case reflect.Ptr:
-		{
-			if value.IsNil() {
-				return true
-			}
-			el := value.Elem().Interface()
-			emptyEl := reflect.New(typ.Elem()).Elem().Interface()
-			return el == emptyEl
-		}
+		return v.Indirect().IsZero()
 	default:
-		return false
+		return reflect.DeepEqual(v.Interface(), t.Zero().InterfaceOrNil())
 	}
+}
+
+// IsZero return true if underlying type is equal to its zero value
+func (v Data) IsZero() bool {
+	return v.Value().IsZero()
+}
+
+// IsZero return true if underlying type is equal to its zero value
+func IsZero(v interface{}) bool {
+	return NewData(v).IsZero()
 }
