@@ -2,8 +2,6 @@ package refutil
 
 import (
 	"testing"
-
-	"github.com/kr/pretty"
 )
 
 func TestSearchIndex(t *testing.T) {
@@ -28,7 +26,6 @@ func TestSearchIndex(t *testing.T) {
 	}
 	defer func() {
 		if r := recover(); r != ErrArgumentNotIndexable {
-			pretty.Println(r)
 			t.Fatal()
 		}
 	}()
