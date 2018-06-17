@@ -12,8 +12,7 @@ func (v Value) InterfaceOrNil() interface{} {
 	return v.Value.Interface()
 }
 
-// CanInterface comply with `Interfacer`.
-// Returns whether value can interface
+// CanInterface returns whether value can interface
 func (v Value) CanInterface() bool {
 	if !v.Value.IsValid() {
 		return false
@@ -21,14 +20,12 @@ func (v Value) CanInterface() bool {
 	return v.Value.CanInterface()
 }
 
-// CanInterface comply with `Interfacer`.
-// Returns whether value can interface
+// CanInterface returns whether value can interface
 func (v Data) CanInterface() bool {
 	return v.Value().CanInterface()
 }
 
-// Interface comply with `Interfacer`.
-// Returns actual data originally inserted
+// Interface returns actual data originally inserted
 func (v Data) Interface() interface{} {
 	return v.Value().Interface()
 }

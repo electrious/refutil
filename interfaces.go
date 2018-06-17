@@ -14,18 +14,27 @@ type Kinder interface {
 	Kind() reflect.Kind
 }
 
-// Interfacer is subset functionality
-// reflect.Value is providing
-type Interfacer interface {
-	CanInterface() bool
-	Interface() interface{}
-}
-
 // Comparator is used as abstraction for method
 // like IsEqual which compare two values
-type Comparator func(interface{}) bool
+type Comparator func(interface{}, interface{}) bool
 
 // Zeroer ...
 type Zeroer interface {
 	IsZero() bool
 }
+
+// Indexer provides unified searching for key, value
+// in map, struct or slice.
+type Indexer interface {
+	At(i int) (Value, Value)
+	Keys() []Value
+}
+
+// IteratorFunc function iterates over Indexer
+// providing key and value
+type IteratorFunc func(*Iterator)
+
+// SearchFunc function iterates over Indexer
+// providing key and value and return result if
+// result of function is true
+type SearchFunc func(*KeyValue) bool

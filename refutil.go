@@ -7,8 +7,6 @@ type Data struct {
 	t Type
 }
 
-var _ Interfacer = Data{}
-
 // NewData creates new Data struct
 func NewData(v interface{}) Data {
 	return Data{

@@ -1,123 +1,100 @@
 package refutil
 
-// FindIndex will search for index with `Comparator`. This is
-// useful for your own comparsion
-// func (v Data) FindIndex(element interface{}, compare Comparator) (index int) {
-// 	arr := v.Indirect()
-// 	if arr.InterfaceOrNil() == nil {
-// 		return -1
-// 	}
-// 	if !arr.KindOneOf(reflect.Array, reflect.Slice) {
-// 		panic(ErrArgumentNotSlice)
-// 	}
+// Search will iterate over struct map or slice
+// providing key value of every element and
+// return first result when iterator return true
+func (v Value) Search(iterator SearchFunc) *KeyValue {
+	var found *KeyValue
+	v.Iterate(func(it *Iterator) {
+		c := it.Current()
+		if iterator(c) {
+			found = c
+			it.Stop()
+		}
+	})
+	return found
+}
 
-// 	val := arr.Value()
-// 	for i := 0; i < val.Len(); i++ {
-// 		if e.CompareInterfacer(compare, val.Index(i)) {
-// 			return i
-// 		}
-// 	}
-// 	return -1
-// }
+// Search will iterate over struct map or slice
+// providing key value of every element and
+// return first result when iterator return true
+func (v Data) Search(iterator SearchFunc) *KeyValue {
+	return v.v.Search(iterator)
+}
 
-// // Compare current value to another with Comparator interface
-// func (v Data) Compare(comparator Comparator, element interface{}) bool {
-// 	if !v.CanInterface() {
-// 		return false
-// 	}
-// 	return comparator(element)
-// }
+// Search will iterate over struct map or slice
+// providing key value of every element and
+// return first result when iterator return true
+func Search(source interface{}, iterator SearchFunc) *KeyValue {
+	return NewData(source).Search(iterator)
+}
 
-// // CompareInterfacer current value to Value with Comparator interface
-// func (v Data) CompareInterfacer(comparator Comparator, i Interfacer) bool {
-// 	if !v.CanInterface() {
-// 		return false
-// 	}
-// 	if !i.CanInterface() {
-// 		return false
-// 	}
-// 	return comparator(i.Interface())
-// }
+// SearchKey will search for specific key in struct slice or map
+func (v Value) SearchKey(compare Comparator, element interface{}) *KeyValue {
+	val := NewValue(element)
+	return v.Search(func(keyVal *KeyValue) bool {
+		if keyVal.Key.Compare(compare, val) {
+			return true
+		}
+		return false
+	})
+}
 
-// // CanIndex returns whether is possible to search in interface{}
-// func CanIndex(source interface{}, element interface{}) bool {
-// 	t := IndirectTypeOf(source)
-// 	return KindOneOf(t, reflect.String, reflect.Map, reflect.Array, reflect.Slice)
-// }
+// SearchKey will search for specific key in struct slice or map
+func (v Data) SearchKey(compare Comparator, element interface{}) *KeyValue {
+	return v.v.SearchKey(compare, element)
+}
 
-// // FindMapKeyByValue will search through map with `Comparator` and
-// // return key if values are matching
-// func FindMapKeyByValue(source interface{}, element interface{}, compare Comparator) (interface{}, bool) {
-// 	s := NewData(source)
-// 	if !s.KindOneOf(reflect.Map) {
-// 		panic(ErrInvalidArgument)
-// 	}
-// 	e := NewData(element)
-// 	val := s.Value()
-// 	keys := val.MapKeys()
-// 	for i := 0; i < len(keys); i++ {
-// 		value := val.MapIndex(keys[i])
-// 		if e.CompareInterfacer(compare, value) {
-// 			return keys[i].Interface(), true
-// 		}
-// 	}
-// 	return nil, false
-// }
+// SearchKey will search for specific key in struct slice or map
+func SearchKey(source interface{}, element interface{}) *KeyValue {
+	d := NewData(source).SearchKey(Equal, element)
+	if d == nil {
+		return nil
+	}
+	return d
+}
 
-// // FindMapValueByKey will search through map with `Comparator` and
-// // retrun value if keys matching
-// func FindMapValueByKey(source interface{}, element interface{}, compare Comparator) (interface{}, bool) {
-// 	s := NewData(source)
-// 	if !s.KindOneOf(reflect.Map) {
-// 		panic(ErrInvalidArgument)
-// 	}
-// 	e := NewData(element)
-// 	val := s.Value()
-// 	keys := val.MapKeys()
-// 	for i := 0; i < len(keys); i++ {
-// 		if e.CompareInterfacer(compare, keys[i]) {
-// 			v := val.MapIndex(keys[i])
-// 			if !v.CanInterface() {
-// 				return nil, false
-// 			}
-// 			return v.Interface(), true
-// 		}
-// 	}
-// 	return nil, false
-// }
+// SearchSameKey will search for specific key in struct slice or map.
+// Unlike SearchKey it the compared keys needs to be deep equal
+func SearchSameKey(source interface{}, element interface{}) *KeyValue {
+	d := NewData(source).SearchKey(DeepEqual, element)
+	if d == nil {
+		return nil
+	}
+	return d
+}
 
-// // FindStringIndex will search for index in string. If type has
-// // fmt.Stringer interface it will use it
-// func FindStringIndex(source interface{}, element interface{}) (index int) {
-// 	s := NewData(source)
-// 	e := NewData(element)
-// 	return strings.Index(s.String(), e.String())
-// }
+// SearchValue will search for specific value in struct slice or map
+func (v Value) SearchValue(compare Comparator, element interface{}) *KeyValue {
+	val := NewValue(element)
+	return v.Search(func(keyVal *KeyValue) bool {
+		if keyVal.Value.Compare(compare, val) {
+			return true
+		}
+		return false
+	})
+}
 
-// // Index will search in source and look for same value using `IsEqual` method,
-// // panics if source is not searchable  otherwise return int as index
-// func Index(source interface{}, value interface{}) (index int) {
-// 	return FindIndex(source, value, Equal)
-// }
+// SearchValue will search for specific value in struct slice or map
+func (v Data) SearchValue(compare Comparator, element interface{}) *KeyValue {
+	return v.v.SearchValue(compare, element)
+}
 
-// // IndexSame will search in source and look for same value using `IsDeepEqual` method,
-// // panics if source is not searchable  otherwise return int as index.
-// // Note that this variant of search care about underlying type
-// func IndexSame(source interface{}, value interface{}) (index int) {
-// 	return FindIndex(source, value, DeepEqual)
-// }
+// SearchValue will search for specific value in struct slice or map
+func SearchValue(source interface{}, element interface{}) *KeyValue {
+	d := NewData(source).SearchValue(Equal, element)
+	if d == nil {
+		return nil
+	}
+	return d
+}
 
-// // Contains will search in source and look for same value using `IsEqual` method,
-// // panics if source is not searchable otherwise return bool if found
-// func Contains(source interface{}, value interface{}) (found bool) {
-// 	index := FindIndex(source, value, Equal)
-// 	return index > -1
-// }
-
-// // ContainsSame will search in source and look for same value using `IsEqual` method,
-// // panics if source is not searchable otherwise return bool if found.
-// // Note that this variant of search care about underlying type
-// func ContainsSame(source interface{}, value interface{}) (found bool) {
-// 	index := FindIndex(source, value, DeepEqual)
-// 	return index > -1
-// }
+// SearchSameValue will search for specific value in struct slice or map.
+// Unlike SearchKey it compared keys needs to be deep equal
+func SearchSameValue(source interface{}, element interface{}) *KeyValue {
+	d := NewData(source).SearchValue(DeepEqual, element)
+	if d == nil {
+		return nil
+	}
+	return d
+}

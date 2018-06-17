@@ -1,54 +1,68 @@
 package refutil
 
-// func TestComparator(t *tesingt.T) {
+import (
+	"testing"
+)
 
-// }
+func TestSearchValue(t *testing.T) {
+	kv := SearchValue([]uint{1, 2, 3}, 3)
+	if kv == nil {
+		t.Fatal()
+	}
+	if kv.Index() != 2 {
+		t.Fatal()
+	}
+	kv = SearchValue([]uint{1, 2, 3}, 5)
+	if kv != nil {
+		t.Fatal()
+	}
+	kv = SearchSameValue([]uint{1, 2, 3}, 1)
+	if kv != nil {
+		t.Fatal()
+	}
+	kv = SearchSameValue([]uint{1, 2, 3}, uint(1))
+	if kv.Index() != 0 {
+		t.Fatal()
+	}
+}
 
-// func TestIncludeElement(t *testing.T) {
-// 	truthful := func(val bool) {
-// 		if !val {
-// 			t.Fail()
-// 		}
-// 	}
-// 	falsey := func(val bool) {
-// 		if val {
-// 			t.Fail()
-// 		}
-// 	}
-// 	list1 := []string{"Foo", "Bar"}
-// 	list2 := []int{1, 2}
-// 	simpleMap := map[interface{}]interface{}{"Foo": "Bar"}
-// 	found, ok := include("Hello World", "World", IsEqual)
-// 	truthful(ok)
-// 	truthful(found != -1)
-// 	found, ok = include(list1, "Foo", IsEqual)
-// 	truthful(ok)
-// 	truthful(found != -1)
-// 	found, ok = include(list1, "Bar", IsEqual)
-// 	truthful(ok)
-// 	truthful(found != -1)
-// 	found, ok = include(list2, 1, IsEqual)
-// 	truthful(ok)
-// 	truthful(found != -1)
-// 	found, ok = include(list2, 2, IsEqual)
-// 	truthful(ok)
-// 	truthful(found != -1)
-// 	found, ok = include(list1, "Foo!", IsEqual)
-// 	truthful(ok)
-// 	falsey(found != -1)
-// 	found, ok = include(list2, 3, IsEqual)
-// 	truthful(ok)
-// 	falsey(found != -1)
-// 	found, ok = include(list2, "1", IsEqual)
-// 	truthful(ok)
-// 	falsey(found != -1)
-// 	found, ok = include(simpleMap, "Foo", IsEqual)
-// 	truthful(ok)
-// 	truthful(found != -1)
-// 	found, ok = include(simpleMap, "Bar", IsEqual)
-// 	truthful(ok)
-// 	falsey(found != -1)
-// 	found, ok = include(1433, "1", IsEqual)
-// 	falsey(ok)
-// 	falsey(found != -1)
-// }
+func TestSearchKey(t *testing.T) {
+	kv := SearchKey([]uint{1, 2, 3}, 2)
+	if kv == nil {
+		t.Fatal()
+	}
+	if kv.Index() != 2 {
+		t.Fatal()
+	}
+	kv = SearchKey([]uint{1, 2, 3}, 5)
+	if kv != nil {
+		t.Fatal()
+	}
+	kv = SearchSameKey([]uint{1, 2, 3}, 100)
+	if kv != nil {
+		t.Fatal()
+	}
+	kv = SearchSameKey([]uint{1, 2, 3}, uint(0))
+	if kv != nil {
+		t.Fatal()
+	}
+	kv = SearchSameKey([]uint{1, 2, 3}, 1)
+	if kv == nil {
+		t.Fatal()
+	}
+}
+
+func TestSearch(t *testing.T) {
+	kv := Search([]uint{1, 2, 3}, func(k *KeyValue) bool {
+		return k.Value.String() == "2"
+	})
+	if kv == nil {
+		t.Fatal()
+	}
+	if kv.Index() != 1 {
+		t.Fatal()
+	}
+	if kv.Value.String() != "2" {
+		t.Fatal()
+	}
+}
