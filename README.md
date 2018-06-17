@@ -2,6 +2,8 @@
 
 
 ![Build Status](https://img.shields.io/circleci/token/f25b550e8746acfe0d4f91ac8cfe857f1974f747/project/github/electrious/refutil/master.svg)
+![Go Report](https://goreportcard.com/badge/github.com/electrious/refutil)
+![Go Coverage](http://gocover.io/_badge/github.com/electrious/refutil)
 [![Go Doc](https://godoc.org/github.com/electrious/refutil?status.svg)](http://godoc.org/github.com/electrious/refutil)
 
 `reflect` functionality and sugar we often use in our projects.
