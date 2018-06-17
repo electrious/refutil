@@ -4,35 +4,69 @@
 ![Build Status](https://img.shields.io/circleci/token/f25b550e8746acfe0d4f91ac8cfe857f1974f747/project/github/electrious/refutil/master.svg)
 [![Go Doc](https://godoc.org/github.com/electrious/refutil?status.svg)](http://godoc.org/github.com/electrious/refutil)
 
-`reflect` functionality we often use in our projects.
+`reflect` functionality and sugar we often use in our projects.
 Who knows maybe you will find it useful as well.
 
-## Package `refutil`
+Features:
 
-### `IsEqual(a, b interface{})`
+- Ability to compare (underlying) values
+- Searching for specific values in map, slice, array or structs
+- Various check functions
+- Easier work with pointers
+- Sugar to not repeat functionality done with reflect
+- Iterator implementation
+
+Package follows same principles of handling errors as `reflect` itself.
+Instead of returning errors when something goes wrong it panics.
+**But** only when supplied arguments are invalid. 
+You also have ability to use `Can*` methods like `CanIndex` and others
+to prevent panicking. 
+
+## Install
+
+Installation is available with `go get` command
+
+```bash
+go get -u  https://github.com/electrious/refutil
+```
+
+## GoDoc
+
+Complete documentation can be found [http://godoc.org/github.com/electrious/refutil](http://godoc.org/github.com/electrious/refutil)
+
+## Few examples from `refutil` package
+
+### `Equal(source, compare interface{})`
 
 this method is intended to compare 2 interfaces if they are same or not.
-Stolen from [Testify Assert](https://github.com/stretchr/testify/tree/master/assert).
-Difference between `reflect.DeepEqual` and `refutil.IsEqual` is that `reflect.IsEqual`
+First implementation stolen from [Testify Assert](https://github.com/stretchr/testify/tree/master/assert).
+Difference between `refutil.DeepEqual` and `refutil.Equal` is that `refutil.Equal`
 dont care about underlying type as long as types are convertible.
 
 ```go
-refutil.IsEqual(uint(1), 1) // true
+refutil.Equal(uint(1), 1) // true
 ```
 
 of course this is possible with any type, not just numeric ones.
 
-### `Len(a interface{})`
+### `IsZero(a interface{})`
 
-Len tell length of object and return if possible to get len on object
+Will check if underlying value is Zero. For any kind of type. Check zero_test.go to see
+all cases.
 
 ```go
-refutil.Len([]uint{1}) // returns 1, true
-refutil.Len("hello") // returns 2, true
-refutil.Len(struct{}{}) // returns 0, false - you cant really get len of struct
+var header []string
+refutil.IsZero(uint(2)) // false
+refutil.IsZero(uint(0)) // true
+refutil.IsZero(nil) // true
+refutil.IsZero((*time.Time)(nil)) // true
+refutil.IsZero(header) // true
+refutil.IsZero([]string{}) // true
+refutil.IsZero([]string{"1"}) // false
+// and os on
 ```
 
-### `Nil(a interface {})`
+### `IsNil(a interface {})`
 
 returns if object is nil or not. Look at example why you want to use it.
 
@@ -49,131 +83,65 @@ err == nil // false
 refutil.IsNil(err) // true
 ```
 
-### `PathTo(a interface {})`
-
-With `reflect.PkgPath(...)` it not works with when value is pointer.
-
-```go
-type K struct{}
-refutil.PathTo(&K{}) // returns "github.com/electrious/refutil"
-```
-
-### `Dereference(a interface {})`
+### `Indirect(a interface {})`
 
 Will get value of `interface{}` if `interface{}` is pointer to something.
 
 ```go
 type K struct{}
 k := K{}
-refutil.Dereference(&k) == refutil.Dereference(k) // true
-refutil.Dereference(nil) == refutil.Dereference((*K)(nil)) // true
+refutil.Indirect(&k) == refutil.Indirect(k) // true
+refutil.Indirect(nil) == refutil.Indirect((*K)(nil)) // true
 ```
 
-### `Index(a, b interface{})`
+### `Index(source, element interface{})`
 
-Index will return index of element in array, map, string or any other searchable.
-It uses Equal. First argument return index if not found return `-1` second argument
-return if source is searchable.
+Index will return index of element in array or slice.
+It uses Equal / DeepEqual. Returns index if not found return `-1`.
 
-```go
-refutil.Index([]uint{1,2,3}, 2) // returns 2, true
-refutil.Index(struct{}{}, 2) // returns -1, false
-```
-
-### `IndexSame(a, b interface{})`
-
-Just like Index except types needs to be equal to make this work.
+Similar methods `IndexSame`
 
 ```go
-refutil.Index([]uint{1,2,3}, uint(2)) // returns 2, true
-refutil.Index([]uint{1,2,3}, 2) // returns -1, true
+refutil.Index([]uint{1,2,3}, 2) // 1
+refutil.IndexSame([]uint{1,2,3}, 2) // -1
+refutil.IndexSame([]uint{1,2,3}, uint(2)) // 1
+refutil.Index(struct{}{}, 2) // panics!
 ```
 
 ### `Contains(a, b interface{})`
 
-Just like Index but if result not found (eg. result of index `-1`) then return false instead.
+Similar to Index except it return boolean and can work with map, array, slice or struct.
+
+Similar methods `ContainsValue`, `ContainsSameValue`, `ContainsKey`, `ContainsSameKey`
 
 ```go
-refutil.Contains([]uint{1,2,3}, 2) // returns found: true, ok: true
-refutil.Contains(struct{}{}, 2) // returns false, false
+refutil.Contains([]uint{1,2,3}, 2) // true
+refutil.ContainsSame([]uint{1,2,3}, uint(2)) // true
+refutil.Contains(map[string]string{"test": "yes!"}, "yes!") // true
+refutil.Contains(struct{}{}, 2) // false
 ```
 
-### `ContainsSame(a, b interface{})`
+### Iteration
 
-Just like IndexSame and same as contains.
+You have ability to implement your own iteration
 
 ```go
-refutil.ContainsSame([]uint{1,2,3}, uint(2)) // returns 2, true
-refutil.ContainsSame([]uint{1,2,3}, 2) // returns false, true
+data := NewData([]uint{1,2,3,4})
+data.Iterate(func (iterator *Iterator) {
+    // return key value pair to of current iteration
+    // key is key of map, struct or in case of slice its index
+    // value is value for specific key
+    kv := iterator.Current()
+    // kv.Key.String() == "0"
+    // kv.Value.String() == "1"
+    // ...
+    // stops iteration
+    iterator.Stop()
+    iterator.HasNext()
+    iterator.CanNext()
+    // other methods available
+})
 ```
-
-
-### `IsZero(a interface{})`
-
-Will check if underlying value is Zero. For any kind of type. Check zero_test.go to see
-behavior in action.
-
-```go
-var header []string
-refutil.IsZero(uint(2)) // returns false
-refutil.IsZero(uint(0)) // returns true
-refutil.IsZero(nil) // true
-refutil.IsZero((*time.Time)(nil)) // true
-refutil.IsZero(header) // true
-refutil.IsZero([]string{}) // true
-refutil.IsZero([]string{"1"}) // false
-// and os on
-```
-
-## Package `structs`
-
-Package structs is copied from great [https://github.com/fatih/structs](https://github.com/fatih/structs).
-It is using `refutil` package to determine few things and to not repeat self too much.
-Otherwise almost same.
-
-```go
-type Server struct {
-	Name        string `json:"name,omitempty"`
-	ID          int
-	Enabled     bool
-	users       []string // not exported
-	http.Server          // embedded
-}
-
-server := &Server{
-	Name:    "gopher",
-	ID:      123456,
-	Enabled: true,
-}
-// Convert a struct to a map[string]interface{}
-// => {"Name":"gopher", "ID":123456, "Enabled":true}
-m := structs.Map(server)
-
-// Convert the values of a struct to a []interface{}
-// => ["gopher", 123456, true]
-v := structs.Values(server)
-
-// Convert the names of a struct to a []string
-// (see "Names methods" for more info about fields)
-n := structs.Names(server)
-
-// Convert the values of a struct to a []*Field
-// (see "Field methods" for more info about fields)
-f := structs.Fields(server)
-
-// Return the struct name => "Server"
-n := structs.Name(server)
-
-// Check if any field of a struct is initialized or not.
-h := structs.HasZero(server)
-
-// Check if all fields of a struct is initialized or not.
-z := structs.IsZero(server)
-
-// Check if server is a struct or a pointer to struct
-i := structs.IsStruct(server)
-```
-
 
 ## Package `unsafe`
 
