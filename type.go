@@ -22,14 +22,6 @@ func (t Type) New() Value {
 	return NewValue(reflect.New(t.Type))
 }
 
-// Zero will return zero if this type
-func (t Type) Zero() Value {
-	if t.IsNil() {
-		return NewValue(nil)
-	}
-	return NewValue(reflect.Zero(t.Type))
-}
-
 // NewSlice will create empty slice (not slice header!)
 func (t Type) NewSlice() Value {
 	sliceType := reflect.SliceOf(t.Elem())

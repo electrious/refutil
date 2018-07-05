@@ -50,3 +50,16 @@ func (v Data) IsZero() bool {
 func IsZero(v interface{}) bool {
 	return NewData(v).IsZero()
 }
+
+// Zero will return zero of type
+func (t Type) Zero() Value {
+	if t.IsNil() {
+		return NewValue(nil)
+	}
+	return NewValue(reflect.Zero(t.Type))
+}
+
+// Zero will return zero of its own type
+func (v Value) Zero() Value {
+	return v.Type().Zero()
+}
