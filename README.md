@@ -29,7 +29,7 @@ to prevent panicking.
 Installation is available with `go get` command
 
 ```bash
-go get -u  https://github.com/electrious/refutil
+go get -u github.com/electrious/refutil
 ```
 
 ## GoDoc
